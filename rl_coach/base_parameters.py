@@ -22,7 +22,8 @@ from collections import OrderedDict
 from enum import Enum
 from typing import Dict, List, Union
 
-from rl_coach.core_types import TrainingSteps, EnvironmentSteps, GradientClippingMethod
+from rl_coach.core_types import TrainingSteps, EnvironmentSteps, GradientClippingMethod, RunPhase
+# from rl_coach.environments.environment import SelectedPhaseOnlyDumpMethod, MaxDumpMethod
 from rl_coach.filters.filter import NoInputFilter
 
 
@@ -205,9 +206,6 @@ class NetworkParameters(Parameters):
         self.embedding_merger_type = EmbeddingMergerType.Concat
         self.middleware_parameters = None
         self.heads_parameters = []
-        self.num_output_head_copies = 1
-        self.loss_weights = []
-        self.rescale_gradient_from_head_by_factor = [1]
         self.use_separate_networks_per_head = False
         self.optimizer_type = 'Adam'
         self.optimizer_epsilon = 0.0001
@@ -227,11 +225,12 @@ class NetworkComponentParameters(Parameters):
         self.dense_layer = dense_layer
 
 
+
 class VisualizationParameters(Parameters):
     def __init__(self):
         super().__init__()
         # Visualization parameters
-        self.print_summary = True
+        self.print_networks_summary = False
         self.dump_csv = True
         self.dump_gifs = False
         self.dump_mp4 = False
@@ -245,6 +244,13 @@ class VisualizationParameters(Parameters):
         self.video_dump_methods = []  # a list of dump methods which will be checked one after the other until the first
                                       # dump method that returns false for should_dump()
         self.add_rendered_image_to_env_response = False
+
+
+# class DumpMP4ForMaxScoreTestEpisodes(VisualizationParameters):
+#     def __init__(self):
+#         super().__init__()
+#         self.video_dump_methods = [SelectedPhaseOnlyDumpMethod(RunPhase.TEST), MaxDumpMethod()]
+#         self.dump_mp4 = True
 
 
 class AgentParameters(Parameters):
@@ -278,13 +284,14 @@ class AgentParameters(Parameters):
 
 
 class TaskParameters(Parameters):
-    def __init__(self, framework_type: str, evaluate_only: bool=False, use_cpu: bool=False, experiment_path=None,
-                 seed=None):
+    def __init__(self, framework_type: str="tensorflow", evaluate_only: bool=False, use_cpu: bool=False,
+                 experiment_path="./experiments/test/", seed=None, save_checkpoint_secs=None):
         """
         :param framework_type: deep learning framework type. currently only tensorflow is supported
         :param evaluate_only: the task will be used only for evaluating the model
         :param use_cpu: use the cpu for this task
         :param experiment_path: the path to the directory which will store all the experiment outputs
+        :param save_checkpoint_secs: the number of seconds between each checkpoint saving
         :param seed: a seed to use for the random numbers generator
         """
         self.framework_type = framework_type
@@ -292,6 +299,7 @@ class TaskParameters(Parameters):
         self.evaluate_only = evaluate_only
         self.use_cpu = use_cpu
         self.experiment_path = experiment_path
+        self.save_checkpoint_secs = save_checkpoint_secs
         self.seed = seed
 
 
