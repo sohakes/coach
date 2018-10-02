@@ -16,6 +16,7 @@
 
 import sys
 sys.path.append('.')
+import signal
 
 import copy
 from rl_coach.core_types import EnvironmentSteps
@@ -29,6 +30,7 @@ import time
 import sys
 from rl_coach.base_parameters import Frameworks, VisualizationParameters, TaskParameters, DistributedTaskParameters
 from multiprocessing import Process
+import multiprocessing
 from multiprocessing.managers import BaseManager
 import subprocess
 from rl_coach.graph_managers.graph_manager import HumanPlayScheduleParameters, GraphManager
@@ -186,14 +188,14 @@ def open_dashboard(experiment_path):
     subprocess.Popen(cmd, shell=True, executable="/bin/bash")
 
 
-def start_graph(graph_manager: 'GraphManager', task_parameters: 'TaskParameters'):
+def start_graph(graph_manager: 'GraphManager', task_parameters: 'TaskParameters', queue=None):
     graph_manager.create_graph(task_parameters)
 
     # let the adventure begin
     if task_parameters.evaluate_only:
         graph_manager.evaluate(EnvironmentSteps(sys.maxsize), keep_networks_in_sync=True)
     else:
-        graph_manager.improve()
+        graph_manager.improve(queue)
 
 
 def main():
@@ -360,6 +362,8 @@ def main():
         comm_manager.start()
         shared_memory_scratchpad = comm_manager.SharedMemoryScratchPad()
 
+        queue = multiprocessing.Queue()
+
         def start_distributed_task(job_type, task_index, evaluation_worker=False,
                                    shared_memory_scratchpad=shared_memory_scratchpad):
             task_parameters = DistributedTaskParameters(framework_type="tensorflow", # TODO: tensorflow should'nt be hardcoded
@@ -377,7 +381,8 @@ def main():
             task_parameters.__dict__ = add_items_to_dict(task_parameters.__dict__, args.__dict__)
             # we assume that only the evaluation workers are rendering
             graph_manager.visualization_parameters.render = args.render and evaluation_worker
-            p = Process(target=start_graph, args=(graph_manager, task_parameters))
+            #os.setpgrp()
+            p = Process(target=start_graph, args=(graph_manager, task_parameters, queue))
             # p.daemon = True
             p.start()
             return p
@@ -398,7 +403,15 @@ def main():
             evaluation_worker = start_distributed_task("worker", args.num_workers, evaluation_worker=True)
 
         # wait for all workers
-        [w.join() for w in workers]
+        try:
+            [w.join() for w in workers]
+        except KeyboardInterrupt:
+            if queue is not None:
+                queue.put("anything")
+                [w.join() for w in workers]
+            else:
+                print("Queue is none but shouldn't be")
+                [w.terminate() for w in workers]
         if args.evaluation_worker:
             evaluation_worker.terminate()
 

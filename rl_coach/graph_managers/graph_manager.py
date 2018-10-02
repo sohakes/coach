@@ -522,7 +522,7 @@ class GraphManager(object):
             self.checkpoint_id += 1
             self.last_checkpoint_saving_time = time.time()
 
-    def improve(self):
+    def improve(self, queue=None):
         """
         The main loop of the run.
         Defined in the following steps:
@@ -551,6 +551,13 @@ class GraphManager(object):
         self.training_start_time = time.time()
         count_end = self.improve_steps.num_steps
         while self.total_steps_counters[RunPhase.TRAIN][self.improve_steps.__class__] < count_end:
+            if queue is not None and not queue.empty():
+                print('got in')
+                for e in self.environments:
+                    print('closing env')
+                    e.close()
+            else:
+                print(queue)
             self.train_and_act(self.steps_between_evaluation_periods)
             self.evaluate(self.evaluation_steps)
 
