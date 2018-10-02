@@ -188,14 +188,18 @@ def open_dashboard(experiment_path):
     subprocess.Popen(cmd, shell=True, executable="/bin/bash")
 
 
-def start_graph(graph_manager: 'GraphManager', task_parameters: 'TaskParameters', queue=None):
-    graph_manager.create_graph(task_parameters)
+def start_graph(graph_manager: 'GraphManager', task_parameters: 'TaskParameters'):
+    try:
+        graph_manager.create_graph(task_parameters)
 
     # let the adventure begin
-    if task_parameters.evaluate_only:
-        graph_manager.evaluate(EnvironmentSteps(sys.maxsize), keep_networks_in_sync=True)
-    else:
-        graph_manager.improve(queue)
+    
+        if task_parameters.evaluate_only:
+            graph_manager.evaluate(EnvironmentSteps(sys.maxsize), keep_networks_in_sync=True)
+        else:
+            graph_manager.improve()
+    except:
+        graph_manager.close_all()
 
 
 def main():
@@ -362,8 +366,6 @@ def main():
         comm_manager.start()
         shared_memory_scratchpad = comm_manager.SharedMemoryScratchPad()
 
-        queue = multiprocessing.Queue()
-
         def start_distributed_task(job_type, task_index, evaluation_worker=False,
                                    shared_memory_scratchpad=shared_memory_scratchpad):
             task_parameters = DistributedTaskParameters(framework_type="tensorflow", # TODO: tensorflow should'nt be hardcoded
@@ -382,7 +384,7 @@ def main():
             # we assume that only the evaluation workers are rendering
             graph_manager.visualization_parameters.render = args.render and evaluation_worker
             #os.setpgrp()
-            p = Process(target=start_graph, args=(graph_manager, task_parameters, queue))
+            p = Process(target=start_graph, args=(graph_manager, task_parameters))
             # p.daemon = True
             p.start()
             return p
@@ -403,15 +405,8 @@ def main():
             evaluation_worker = start_distributed_task("worker", args.num_workers, evaluation_worker=True)
 
         # wait for all workers
-        try:
-            [w.join() for w in workers]
-        except KeyboardInterrupt:
-            if queue is not None:
-                queue.put("anything")
-                [w.join() for w in workers]
-            else:
-                print("Queue is none but shouldn't be")
-                [w.terminate() for w in workers]
+
+        [w.join() for w in workers]
         if args.evaluation_worker:
             evaluation_worker.terminate()
 

@@ -431,3 +431,6 @@ class GymEnvironment(Environment):
         if self.is_mujoco_env:
             self._set_mujoco_camera(0)
         return image
+
+    def close(self):
+        self.env.close()

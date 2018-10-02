@@ -464,6 +464,9 @@ class Environment(EnvironmentInterface):
         """
         return np.transpose(self.state['observation'], [1, 2, 0])
 
+    def close(self):
+        pass
+
 
 """
 Video Dumping Methods
