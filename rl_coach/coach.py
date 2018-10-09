@@ -198,7 +198,10 @@ def start_graph(graph_manager: 'GraphManager', task_parameters: 'TaskParameters'
             graph_manager.evaluate(EnvironmentSteps(sys.maxsize), keep_networks_in_sync=True)
         else:
             graph_manager.improve()
-    except:
+    except Exception as e:
+        print("Error:", e)
+        import traceback
+        traceback.print_tb(e.__traceback__)
         graph_manager.close_all()
 
 
@@ -316,6 +319,8 @@ def main():
                         type=int)
 
     args = parse_arguments(parser)
+
+    print(args.verbosity)
 
     graph_manager = get_graph_manager_from_args(args)
 

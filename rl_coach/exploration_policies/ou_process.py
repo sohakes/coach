@@ -69,8 +69,13 @@ class OUProcess(ExplorationPolicy):
             noise = self.noise()
         else:
             noise = np.zeros(self.action_space.shape)
-
-        action = action_values.squeeze() + noise
+        if isinstance(action_values, list):
+            # the action values are expected to be a list with the action mean and optionally the action stdev
+            action_values = action_values[0].squeeze()
+        else:
+            # the action values are expected to be a numpy array representing the action mean
+            action_values = action_values.squeeze()
+        action = action_values + noise
 
         return action
 
