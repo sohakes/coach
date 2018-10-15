@@ -384,6 +384,7 @@ def main():
                                                         num_training_tasks=args.num_workers,
                                                         experiment_path=args.experiment_path,
                                                         shared_memory_scratchpad=shared_memory_scratchpad,
+                                                        save_checkpoint_secs=args.save_checkpoint_secs,
                                                         seed=args.seed+task_index if args.seed is not None else None)  # each worker gets a different seed
             task_parameters.__dict__ = add_items_to_dict(task_parameters.__dict__, args.__dict__)
             # we assume that only the evaluation workers are rendering

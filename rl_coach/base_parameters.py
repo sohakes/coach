@@ -307,7 +307,7 @@ class DistributedTaskParameters(TaskParameters):
     def __init__(self, framework_type: str, parameters_server_hosts: str, worker_hosts: str, job_type: str,
                  task_index: int, evaluate_only: bool=False, num_tasks: int=None,
                  num_training_tasks: int=None, use_cpu: bool=False, experiment_path=None, dnd=None,
-                 shared_memory_scratchpad=None, seed=None):
+                 shared_memory_scratchpad=None, seed=None, save_checkpoint_secs=None):
         """
         :param framework_type: deep learning framework type. currently only tensorflow is supported
         :param evaluate_only: the task will be used only for evaluating the model
@@ -324,7 +324,7 @@ class DistributedTaskParameters(TaskParameters):
         :param seed: a seed to use for the random numbers generator
         """
         super().__init__(framework_type=framework_type, evaluate_only=evaluate_only, use_cpu=use_cpu,
-                         experiment_path=experiment_path, seed=seed)
+                         experiment_path=experiment_path, seed=seed, save_checkpoint_secs=save_checkpoint_secs)
         self.parameters_server_hosts = parameters_server_hosts
         self.worker_hosts = worker_hosts
         self.job_type = job_type
@@ -335,3 +335,4 @@ class DistributedTaskParameters(TaskParameters):
         self.worker_target = None
         self.dnd = dnd
         self.shared_memory_scratchpad = shared_memory_scratchpad
+        self.save_checkpoint_secs = save_checkpoint_secs
