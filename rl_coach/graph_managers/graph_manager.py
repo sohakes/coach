@@ -220,7 +220,9 @@ class GraphManager(object):
             self.set_session(self.sess)
         else:
             self.variables_to_restore = tf.global_variables()
-            self.variables_to_restore = [v for v in self.variables_to_restore if '/online' in v.name]
+            #print('what it would be', [v.name for v in self.variables_to_restore if '/online' in v.name])
+           # print('what it is', [v.name for v in self.variables_to_restore])
+            # self.variables_to_restore = [v for v in self.variables_to_restore if '/online' in v.name]
             self.checkpoint_saver = tf.train.Saver(self.variables_to_restore)
 
             # regular session
