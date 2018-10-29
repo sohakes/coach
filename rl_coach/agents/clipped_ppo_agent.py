@@ -212,10 +212,10 @@ class ClippedPPOAgent(ActorCriticAgent):
                 self.value_targets.add_sample(value_targets)
                 self.likelihood_ratio.add_sample(fetch_result[2])
                 self.clipped_likelihood_ratio.add_sample(fetch_result[3])
-
+            print("batch results before mean:", batch_results['losses'])
             for key in batch_results.keys():
                 batch_results[key] = np.mean(batch_results[key], 0)
-
+            print("batch results:", batch_results['losses'])
             self.value_loss.add_sample(batch_results['losses'][0])
             self.policy_loss.add_sample(batch_results['losses'][1])
 
